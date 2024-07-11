@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('SCM') {
+            steps {
+                git credentialsId: 'github',
+                    url: 'https://github.com/konyq/dokceransiblejenkins.git'
+            }
+        }
+        stage('Maven Build'){
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        stage('Docker Build'){
+            steps {
+                sh 'docker build -t konyq/demoapp:0.1 .'
+            }
+        }
+        stage('DockerHub Push'){
+            steps {
+                withCredentials([string(credentialsId: 'dockerhub-id', variable: 'dockerhubpwd')]) {
+                    sh 'docker login -u konyq -p ${dockerhubpwd}'
+                }
+                sh 'docker push konyq/demoapp:0.1'
+            }
+        }
+    }
+}
